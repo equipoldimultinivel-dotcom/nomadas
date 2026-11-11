@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nómadas Créditos</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<style>
+:root{--crema:#f4f1e6;--papel:#faf8f1;--verde:#2f4a3a;--verde2:#dbe3d6;--tierra:#d9825b;--tinta:#1f2a24;--borde:#d9d6c6}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--crema);color:var(--tinta)}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 5vw;border-bottom:1px solid var(--borde);background:var(--crema);position:sticky;top:0;z-index:5}
+.logo{display:flex;align-items:center;gap:8px;font-weight:700;color:var(--verde);letter-spacing:.04em}
+.logo img{height:38px}
+nav{display:flex;gap:4px;flex-wrap:wrap}
+nav a,.btn{cursor:pointer;border:1px solid var(--verde);background:none;color:var(--verde);padding:8px 14px;border-radius:8px;font:inherit;text-decoration:none}
+nav a{border-color:transparent}
+nav a.on{background:var(--verde2)}
+.btn.p{background:var(--verde);color:#fff}
+.btn.s{padding:4px 10px;font-size:14px}
+.btn.d{border-color:#a33;color:#a33}
+.user{display:flex;align-items:center;gap:10px;font-size:15px}
+.user img,.av{width:34px;height:34px;border-radius:50%;background:var(--tierra);object-fit:cover}
+main{max-width:1000px;margin:0 auto;padding:28px 5vw 60px}
+h1,h2,h3{font-weight:600;line-height:1.2;margin:0 0 10px}
+.hero{display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:center;background:var(--papel);border:1px solid var(--borde);border-radius:16px;padding:32px}
+.num{font-size:clamp(56px,10vw,92px);font-weight:300;color:var(--verde);line-height:1}
+.barra{height:14px;background:var(--verde2);border-radius:8px;overflow:hidden;margin:12px 0}
+.barra i{display:block;height:100%;background:var(--verde);color:#fff;font:600 10px/14px system-ui;text-align:right;padding-right:6px}
+.tri{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:28px 0}
+.card{background:var(--papel);border:1px solid var(--borde);border-radius:14px;padding:20px;text-align:center}
+.card .ic{font-size:30px}
+.gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
+.gal img{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:14px}
+.prod{text-align:left;padding:0;overflow:hidden}
+.prod img{width:100%;aspect-ratio:4/3;object-fit:cover;background:var(--verde2)}
+.prod div{padding:14px}
+.pts{color:var(--tierra);font-weight:600}
+.login{max-width:380px;margin:12vh auto;text-align:center;background:var(--papel);border:1px solid var(--borde);border-radius:16px;padding:32px}
+input,textarea{width:100%;font:inherit;padding:9px;border:1px solid var(--borde);border-radius:8px;background:#fff;margin:4px 0 10px}
+label{font-size:14px;color:#55614f}
+table{width:100%;border-collapse:collapse;background:var(--papel);border-radius:12px;overflow:hidden}
+td,th{padding:10px;border-bottom:1px solid var(--borde);text-align:left;vertical-align:middle}
+td input{margin:0;width:90px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.msg{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--verde);color:#fff;padding:10px 18px;border-radius:10px}
+:focus-visible{outline:3px solid var(--tierra);outline-offset:2px}
+@media(max-width:700px){.hero,.tri{grid-template-columns:1fr}header{flex-wrap:wrap}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+/* ====== CONFIGURACIÓN: pega aquí los datos de tu proyecto Supabase ====== */
+const SUPABASE_URL = "https://cozhcwqvasqqeicgcjnr.supabase.co/rest/v1/";
+const SUPABASE_KEY = "sb_publishable_DIEUpAuLTU-qrwhxlwfbiw_KSpWBjSR";
+/* ======================================================================== */
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const $ = s => document.querySelector(s);
+const esc = t => String(t ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const DEF = {
+  creditos_texto: "Cada consumo suma. Cada crédito nos acerca a construir algo más grande.",
+  meta_titulo: "Nuestro proyecto está tomando forma",
+  meta_porcentaje: "38",
+  meta_texto: "Progreso para dar inicio a Nómadas' Kaffé & Aventura",
+  titulo_conoce: "Conoce Nómadas",
+  mision: "Crear un punto de encuentro donde el café, la naturaleza y la aventura conecten a las personas, impulsando experiencias auténticas y una comunidad que crece compartiendo.",
+  vision: "Convertirnos en un referente de experiencias de montaña en República Dominicana, donde cada visita sea una oportunidad para descubrir, conectar y vivir diferente.",
+  valores: "Libertad, Aventura, Comunidad, Autenticidad, Respeto por la naturaleza, Pasión por el café",
+  titulo_galeria: "Así estamos construyendo nuestros sueños",
+  lema: "Sin reglas. Solo ruta."
+};
+let S = { user: null, perfil: null, c: {...DEF}, galeria: [], productos: [] };
+let tab = "textos";
+const toast = t => { const d = document.createElement("div"); d.className = "msg"; d.textContent = t; document.body.append(d); setTimeout(() => d.remove(), 2500); };
+const view = () => (location.hash.slice(1) || "inicio");
+
+async function cargar() {
+  const { data: { session } } = await sb.auth.getSession();
+  S.user = session?.user ?? null;
+  if (!S.user) return render();
+  const [p, c, g, pr] = await Promise.all([
+    sb.from("profiles").select("*").eq("id", S.user.id).single(),
+    sb.from("contenido").select("*"),
+    sb.from("galeria").select("*").order("orden"),
+    sb.from("productos").select("*").eq("activo", true).order("id")
+  ]);
+  S.perfil = p.data;
+  S.c = {...DEF, ...Object.fromEntries((c.data || []).map(r => [r.clave, r.valor]))};
+  S.galeria = g.data || []; S.productos = pr.data || [];
+  render();
+}
+
+function header() {
+  const v = view(), adm = S.perfil?.rol === "admin";
+  return `<header>
+    <div class="logo"><img src="imagenes/logo.jpeg" alt="" onerror="this.remove()">NÓMADAS<small>CRÉDITOS</small></div>
+    <nav><a href="#inicio" class="${v==="inicio"?"on":""}">Inicio</a><a href="#catalogo" class="${v==="catalogo"?"on":""}">Catálogo</a>${adm?`<a href="#admin" class="${v==="admin"?"on":""}">Administrar</a>`:""}</nav>
+    <div class="user">Hola, ${esc((S.perfil?.nombre||"").split(" ")[0])}
+      ${S.perfil?.avatar?`<img src="${esc(S.perfil.avatar)}" alt="">`:`<span class="av"></span>`}
+      <button class="btn s" id="salir">Salir</button></div></header>`;
+}
+
+function loginView() {
+  return `<div class="login"><img src="imagenes/logo.png" alt="Nómadas" style="max-width:160px" onerror="this.remove()">
+    <h1>Bienvenido a Nómadas</h1><p>Entra para ver tus créditos.</p>
+    <button class="btn p" id="google" style="width:100%">Continuar con Google</button>
+    <p style="margin:18px 0 4px;font-size:14px">o recibe un enlace en tu correo</p>
+    <input id="mail" type="email" placeholder="tucorreo@gmail.com">
+    <button class="btn" id="magic" style="width:100%">Enviar enlace</button></div>`;
+}
+
+function inicioView() {
+  const pct = Math.max(0, Math.min(100, +S.c.meta_porcentaje || 0));
+  const vals = S.c.valores.split(",").map(v => v.trim()).filter(Boolean).join(" · ");
+  return `<section class="hero"><div style="text-align:center">
+      <div>TOTAL DE CRÉDITOS NÓMADAS</div><div class="num">${(S.perfil?.puntos ?? 0).toLocaleString("es-DO")}</div>
+      <p>${esc(S.c.creditos_texto)}</p></div>
+    <div><h2>${esc(S.c.meta_titulo)}</h2>
+      <div class="barra"><i style="width:${pct}%">${pct}%</i></div><p>${esc(S.c.meta_texto)}</p></div></section>
+    <section class="tri">
+      <div class="card"><h3>${esc(S.c.titulo_conoce)}</h3><div class="ic">🧭</div><b>MISIÓN</b><p>${esc(S.c.mision)}</p></div>
+      <div class="card"><h3>${esc(S.c.titulo_conoce)}</h3><div class="ic">⛰️</div><b>VISIÓN</b><p>${esc(S.c.vision)}</p></div>
+      <div class="card"><h3>${esc(S.c.titulo_conoce)}</h3><div class="ic">🧡</div><b>VALORES</b><p>${esc(vals)}</p></div>
+    </section>
+    <h2 style="text-align:center">${esc(S.c.titulo_galeria)}</h2>
+    <div class="gal">${S.galeria.map(g => `<img src="${esc(g.url)}" alt="">`).join("") || "<p>Pronto verás fotos aquí.</p>"}</div>`;
+}
+
+function catalogoView() {
+  return `<h1>Catálogo</h1><p>Cada compra suma créditos a tu cuenta.</p><div class="gal">${
+    S.productos.map(p => `<div class="card prod">${p.imagen?`<img src="${esc(p.imagen)}" alt="">`:`<img alt="">`}
+      <div><h3>${esc(p.nombre)}</h3><p>${esc(p.descripcion)}</p>
+      <b>${p.precio!=null?"RD$ "+esc(p.precio):""}</b> <span class="pts">${p.puntos?"+"+esc(p.puntos)+" créditos":""}</span></div></div>`).join("") || "<p>Aún no hay productos.</p>"}</div>`;
+}
+
+/* ====== ADMIN ====== */
+async function subir(file) {
+  const ruta = Date.now() + "-" + file.name.replace(/[^\w.]/g, "_");
+  const { error } = await sb.storage.from("imagenes").upload(ruta, file);
+  if (error) { toast("Error: " + error.message); return null; }
+  return sb.storage.from("imagenes").getPublicUrl(ruta).data.publicUrl;
+}
+const tabs = [["textos","Textos"],["imagenes","Galería"],["productos","Productos"],["usuarios","Usuarios"]];
+
+async function adminView() {
+  let body = "";
+  if (tab === "textos") {
+    body = Object.keys(DEF).map(k => `<label>${k.replace(/_/g," ")}</label>${DEF[k].length>70?`<textarea data-k="${k}" rows="3">${esc(S.c[k])}</textarea>`:`<input data-k="${k}" value="${esc(S.c[k])}">`}`).join("")
+      + `<button class="btn p" id="gtextos">Guardar textos</button>`;
+  } else if (tab === "imagenes") {
+    body = `<input type="file" id="fgal" accept="image/*" multiple><div class="gal">${S.galeria.map(g => `<div><img src="${esc(g.url)}" alt=""><button class="btn s d" data-delg="${g.id}">Quitar</button></div>`).join("")}</div>`;
+  } else if (tab === "productos") {
+    body = `<div class="card" style="text-align:left"><h3>Nuevo producto</h3>
+      <input id="pn" placeholder="Nombre"><textarea id="pd" placeholder="Descripción" rows="2"></textarea>
+      <div class="row"><input id="pp" type="number" placeholder="Precio RD$" style="width:140px"><input id="pc" type="number" placeholder="Créditos que da" style="width:160px"><input id="pi" type="file" accept="image/*" style="width:auto"></div>
+      <button class="btn p" id="addp">Agregar</button></div><br>
+      <table>${S.productos.map(p => `<tr><td>${esc(p.nombre)}</td><td>RD$ ${esc(p.precio)}</td><td>${esc(p.puntos)} cr.</td><td><button class="btn s d" data-delp="${p.id}">Eliminar</button></td></tr>`).join("")}</table>`;
+  } else {
+    const { data } = await sb.from("profiles").select("*").order("creado", { ascending: false });
+    body = `<input id="buscar" placeholder="Buscar por nombre o correo"><table><tr><th>Usuario</th><th>Créditos</th><th>Rol</th><th></th></tr>${(data||[]).map(u => `<tr data-u="${u.id}"><td>${esc(u.nombre)}<br><small>${esc(u.email)}</small></td><td><input type="number" value="${u.puntos}"></td><td>${esc(u.rol)}</td><td><button class="btn s p" data-sp="${u.id}">Guardar</button></td></tr>`).join("")}</table>`;
+  }
+  return `<h1>Panel de administración</h1><nav>${tabs.map(([k,n]) => `<a href="#admin" data-tab="${k}" class="${tab===k?"on":""}">${n}</a>`).join("")}</nav><br>${body}`;
+}
+
+function adminEvents() {
+  document.querySelectorAll("[data-tab]").forEach(a => a.onclick = e => { e.preventDefault(); tab = a.dataset.tab; render(); });
+  const on = (id, fn) => { const e = $(id); if (e) e.onclick = fn; };
+  on("#gtextos", async () => {
+    const rows = [...document.querySelectorAll("[data-k]")].map(e => ({ clave: e.dataset.k, valor: e.value }));
+    const { error } = await sb.from("contenido").upsert(rows);
+    error ? toast("Error: " + error.message) : (toast("Textos guardados"), cargar());
+  });
+  const fg = $("#fgal");
+  if (fg) fg.onchange = async () => {
+    for (const f of fg.files) { const url = await subir(f); if (url) await sb.from("galeria").insert({ url, orden: S.galeria.length }); }
+    toast("Imágenes subidas"); cargar();
+  };
+  document.querySelectorAll("[data-delg]").forEach(b => b.onclick = async () => { await sb.from("galeria").delete().eq("id", b.dataset.delg); cargar(); });
+  on("#addp", async () => {
+    const f = $("#pi").files[0], imagen = f ? await subir(f) : null;
+    const { error } = await sb.from("productos").insert({ nombre: $("#pn").value, descripcion: $("#pd").value, precio: +$("#pp").value || null, puntos: +$("#pc").value || 0, imagen });
+    error ? toast("Error: " + error.message) : (toast("Producto agregado"), cargar());
+  });
+  document.querySelectorAll("[data-delp]").forEach(b => b.onclick = async () => { if (confirm("¿Eliminar producto?")) { await sb.from("productos").delete().eq("id", b.dataset.delp); cargar(); } });
+  document.querySelectorAll("[data-sp]").forEach(b => b.onclick = async () => {
+    const v = b.closest("tr").querySelector("input").value;
+    const { error } = await sb.from("profiles").update({ puntos: parseInt(v) || 0 }).eq("id", b.dataset.sp);
+    error ? toast("Error: " + error.message) : toast("Créditos actualizados");
+  });
+  const q = $("#buscar");
+  if (q) q.oninput = () => document.querySelectorAll("tr[data-u]").forEach(r => r.style.display = r.textContent.toLowerCase().includes(q.value.toLowerCase()) ? "" : "none");
+}
+
+async function render() {
+  const app = $("#app");
+  if (!S.user) {
+    app.innerHTML = loginView();
+    $("#google").onclick = () => sb.auth.signInWithOAuth({ provider: "google", options: { redirectTo: location.origin + location.pathname } });
+    $("#magic").onclick = async () => {
+      const { error } = await sb.auth.signInWithOtp({ email: $("#mail").value, options: { emailRedirectTo: location.origin + location.pathname } });
+      toast(error ? "Error: " + error.message : "Revisa tu correo");
+    };
+    return;
+  }
+  const v = view(), adm = S.perfil?.rol === "admin";
+  const cont = v === "catalogo" ? catalogoView() : v === "admin" && adm ? await adminView() : inicioView();
+  app.innerHTML = header() + `<main>${cont}</main>`;
+  $("#salir").onclick = async () => { await sb.auth.signOut(); S.user = null; S.perfil = null; render(); };
+  if (v === "admin" && adm) adminEvents();
+}
+
+window.addEventListener("hashchange", render);
+sb.auth.onAuthStateChange((ev) => { if (ev === "SIGNED_IN" || ev === "SIGNED_OUT") cargar(); });
+cargar();
+</script>
+</body>
+</html>

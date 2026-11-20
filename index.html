@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Nómadas Créditos</title>
+<title>Nómadas puntos</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <style>
 :root{--crema:#f4f1e6;--papel:#faf8f1;--verde:#2f4a3a;--verde2:#dbe3d6;--tierra:#d9825b;--tinta:#1f2a24;--borde:#d9d6c6}
@@ -59,7 +59,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const $ = s => document.querySelector(s);
 const esc = t => String(t ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const DEF = {
-  creditos_texto: "Cada consumo suma. Cada crédito nos acerca a construir algo más grande.",
+  creditos_texto: "Cada consumo suma. Cada punto nos acerca a construir algo más grande.",
   meta_titulo: "Nuestro proyecto está tomando forma",
   meta_porcentaje: "38",
   meta_texto: "Progreso para dar inicio a Nómadas' Kaffé & Aventura",
@@ -94,7 +94,7 @@ async function cargar() {
 function header() {
   const v = view(), adm = S.perfil?.rol === "admin";
   return `<header>
-    <div class="logo"><img src="imagenes/logo.jpeg" alt="" onerror="this.remove()">NÓMADAS<small>CRÉDITOS</small></div>
+    <div class="logo"><img src="imagenes/logo.jpeg" alt="" onerror="this.remove()">NÓMADAS<small>PUNTOS</small></div>
     <nav><a href="#inicio" class="${v==="inicio"?"on":""}">Inicio</a><a href="#catalogo" class="${v==="catalogo"?"on":""}">Catálogo</a>${adm?`<a href="#admin" class="${v==="admin"?"on":""}">Administrar</a>`:""}</nav>
     <div class="user">Hola, ${esc((S.perfil?.nombre||"").split(" ")[0])}
       ${S.perfil?.avatar?`<img src="${esc(S.perfil.avatar)}" alt="">`:`<span class="av"></span>`}
@@ -103,7 +103,7 @@ function header() {
 
 function loginView() {
   return `<div class="login"><img src="imagenes/logo.jpeg" alt="Nómadas" style="max-width:160px" onerror="this.remove()">
-    <h1>Bienvenido a Nómadas</h1><p>Entra para ver tus créditos.</p>
+    <h1>Bienvenido a Nómadas</h1><p>Entra para ver tus puntos.</p>
     <button class="btn p" id="google" style="width:100%">Continuar con Google</button>
     <p style="margin:18px 0 4px;font-size:14px">o recibe un enlace en tu correo</p>
     <input id="mail" type="email" placeholder="tucorreo@gmail.com">
@@ -114,7 +114,7 @@ function inicioView() {
   const pct = Math.max(0, Math.min(100, +S.c.meta_porcentaje || 0));
   const vals = S.c.valores.split(",").map(v => v.trim()).filter(Boolean).join(" · ");
   return `<section class="hero"><div style="text-align:center">
-      <div>TOTAL DE CRÉDITOS NÓMADAS</div><div class="num">${(S.perfil?.puntos ?? 0).toLocaleString("es-DO")}</div>
+      <div>TOTAL DE puntos NÓMADAS</div><div class="num">${(S.perfil?.puntos ?? 0).toLocaleString("es-DO")}</div>
       <p>${esc(S.c.creditos_texto)}</p></div>
     <div><h2>${esc(S.c.meta_titulo)}</h2>
       <div class="barra"><i style="width:${pct}%">${pct}%</i></div><p>${esc(S.c.meta_texto)}</p></div></section>
@@ -128,10 +128,10 @@ function inicioView() {
 }
 
 function catalogoView() {
-  return `<h1>Catálogo</h1><p>Cada compra suma créditos a tu cuenta.</p><div class="gal">${
+  return `<h1>Catálogo</h1><p>Cada compra suma puntos a tu cuenta.</p><div class="gal">${
     S.productos.map(p => `<div class="card prod">${p.imagen?`<img src="${esc(p.imagen)}" alt="">`:`<img alt="">`}
       <div><h3>${esc(p.nombre)}</h3><p>${esc(p.descripcion)}</p>
-      <b>${p.precio!=null?"RD$ "+esc(p.precio):""}</b> <span class="pts">${p.puntos?"+"+esc(p.puntos)+" créditos":""}</span></div></div>`).join("") || "<p>Aún no hay productos.</p>"}</div>`;
+      <b>${p.precio!=null?"RD$ "+esc(p.precio):""}</b> <span class="pts">${p.puntos?"+"+esc(p.puntos)+"puntos":""}</span></div></div>`).join("") || "<p>Aún no hay productos.</p>"}</div>`;
 }
 
 /* ====== ADMIN ====== */
@@ -153,12 +153,12 @@ async function adminView() {
   } else if (tab === "productos") {
     body = `<div class="card" style="text-align:left"><h3>Nuevo producto</h3>
       <input id="pn" placeholder="Nombre"><textarea id="pd" placeholder="Descripción" rows="2"></textarea>
-      <div class="row"><input id="pp" type="number" placeholder="Precio RD$" style="width:140px"><input id="pc" type="number" placeholder="Créditos que da" style="width:160px"><input id="pi" type="file" accept="image/*" style="width:auto"></div>
+      <div class="row"><input id="pp" type="number" placeholder="Precio RD$" style="width:140px"><input id="pc" type="number" placeholder="puntos que da" style="width:160px"><input id="pi" type="file" accept="image/*" style="width:auto"></div>
       <button class="btn p" id="addp">Agregar</button></div><br>
       <table>${S.productos.map(p => `<tr><td>${esc(p.nombre)}</td><td>RD$ ${esc(p.precio)}</td><td>${esc(p.puntos)} cr.</td><td><button class="btn s d" data-delp="${p.id}">Eliminar</button></td></tr>`).join("")}</table>`;
   } else {
     const { data } = await sb.from("profiles").select("*").order("creado", { ascending: false });
-    body = `<input id="buscar" placeholder="Buscar por nombre o correo"><table><tr><th>Usuario</th><th>Créditos</th><th>Rol</th><th></th></tr>${(data||[]).map(u => `<tr data-u="${u.id}"><td>${esc(u.nombre)}<br><small>${esc(u.email)}</small></td><td><input type="number" value="${u.puntos}"></td><td>${esc(u.rol)}</td><td><button class="btn s p" data-sp="${u.id}">Guardar</button></td></tr>`).join("")}</table>`;
+    body = `<input id="buscar" placeholder="Buscar por nombre o correo"><table><tr><th>Usuario</th><th>puntos</th><th>Rol</th><th></th></tr>${(data||[]).map(u => `<tr data-u="${u.id}"><td>${esc(u.nombre)}<br><small>${esc(u.email)}</small></td><td><input type="number" value="${u.puntos}"></td><td>${esc(u.rol)}</td><td><button class="btn s p" data-sp="${u.id}">Guardar</button></td></tr>`).join("")}</table>`;
   }
   return `<h1>Panel de administración</h1><nav>${tabs.map(([k,n]) => `<a href="#admin" data-tab="${k}" class="${tab===k?"on":""}">${n}</a>`).join("")}</nav><br>${body}`;
 }
@@ -186,7 +186,7 @@ function adminEvents() {
   document.querySelectorAll("[data-sp]").forEach(b => b.onclick = async () => {
     const v = b.closest("tr").querySelector("input").value;
     const { error } = await sb.from("profiles").update({ puntos: parseInt(v) || 0 }).eq("id", b.dataset.sp);
-    error ? toast("Error: " + error.message) : toast("Créditos actualizados");
+    error ? toast("Error: " + error.message) : toast("puntos actualizados");
   });
   const q = $("#buscar");
   if (q) q.oninput = () => document.querySelectorAll("tr[data-u]").forEach(r => r.style.display = r.textContent.toLowerCase().includes(q.value.toLowerCase()) ? "" : "none");
